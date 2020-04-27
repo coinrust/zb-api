@@ -89,7 +89,7 @@ func GetParamHmacMD5Sign(secret, params string) (string, error) {
 }
 
 /**
- *md5签名,okcoin和huobi适用
+ *md5签名
  */
 func GetParamMD5Sign(secret, params string) (string, error) {
 	hash := md5.New()
