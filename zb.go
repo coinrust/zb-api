@@ -22,13 +22,6 @@ const (
 	OK = 1000
 )
 
-var (
-	MARKET_URL = "http://api.zb.live/data/v1/"
-	TICKER_API = "ticker?market=%s"
-	DEPTH_API  = "depth?market=%s&size=%d"
-	TRADE_URL  = "https://trade.zb.live/api/"
-)
-
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type ZB struct {
@@ -36,6 +29,9 @@ type ZB struct {
 	accessKey  string
 	secretKey  string
 	debugMode  bool
+
+	marketURL string // "http://api.zb.live/data/v1/"
+	tradeURL  string // "https://trade.zb.live/api/"
 }
 
 func (z *ZB) HttpGet(reqUrl string, postData string, headers map[string]string, result interface{}) ([]byte, error) {
@@ -99,7 +95,22 @@ func (z *ZB) buildSignParams(params *url.Values) error {
 	return nil
 }
 
-func NewZB(httpClient *http.Client, accessKey string, secretKey string, debugMode bool) *ZB {
+// SetProxy 设置代理
+// proxyURL: "socks5://127.0.0.1:1080"
+func (z *ZB) SetProxy(proxyURL string) (err error) {
+	transport := CloneDefaultTransport()
+	transport.Proxy, err = ParseProxy(proxyURL)
+	if err != nil {
+		return
+	}
+	z.httpClient.Transport = transport
+	return nil
+}
+
+// domain: zb.live/zb.com
+func NewZB(httpClient *http.Client, host string, accessKey string, secretKey string, debugMode bool) *ZB {
+	marketURL := fmt.Sprintf("http://api.%v/data/v1/", host) // "http://api.zb.live/data/v1/"
+	tradeURL := fmt.Sprintf("https://trade.%v/api/", host)   // "https://trade.zb.live/api/"
 	if httpClient == nil {
 		httpClient = &http.Client{
 			Timeout: 10 * time.Second,
@@ -110,6 +121,8 @@ func NewZB(httpClient *http.Client, accessKey string, secretKey string, debugMod
 		accessKey:  accessKey,
 		secretKey:  secretKey,
 		debugMode:  debugMode,
+		marketURL:  marketURL,
+		tradeURL:   tradeURL,
 	}
 }
 

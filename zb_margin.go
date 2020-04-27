@@ -6,12 +6,13 @@ import (
 	"net/url"
 )
 
+// GetLeverAssetsInfo 获取用户杠杆信息
 func (z *ZB) GetLeverAssetsInfo() (result LeverAssetsInfo, err error) {
 	params := url.Values{}
 	params.Set("method", "getLeverAssetsInfo")
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getLeverAssetsInfo?" + params.Encode()
+	url := z.tradeURL + "getLeverAssetsInfo?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
@@ -41,7 +42,7 @@ func (z *ZB) GetLoans(coin string, pageIndex int, pageSize int) (result []Loan, 
 	params.Set("pageSize", fmt.Sprint(pageSize))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getLoans?" + params.Encode()
+	url := z.tradeURL + "getLoans?" + params.Encode()
 	var ret LoansResponse
 	_, err = z.HttpGet(url, "", nil, &ret)
 	if err != nil {
@@ -71,7 +72,7 @@ func (z *ZB) GetLoanRecords(loanId string, marketName string, status int, pageIn
 	params.Set("pageSize", fmt.Sprint(pageSize))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getLoanRecords?" + params.Encode()
+	url := z.tradeURL + "getLoanRecords?" + params.Encode()
 	var ret LoanRecordResponse
 	_, err = z.HttpGet(url, "", nil, &ret)
 	if err != nil {
@@ -102,7 +103,7 @@ func (z *ZB) Borrow(marketName string, coin string, amount float64, interestRate
 	params.Set("isLoop", fmt.Sprint(isLoop))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "borrow?" + params.Encode()
+	url := z.tradeURL + "borrow?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":1001,"message":"您的资金安全密码已经被锁定，请等待24个小时后会自动解锁。"}
 	return
@@ -124,7 +125,7 @@ func (z *ZB) AutoBorrow(marketName string, coin string, amount float64, interest
 	params.Set("safePwd", safePwd)
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "autoBorrow?" + params.Encode()
+	url := z.tradeURL + "autoBorrow?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":1001,"message":"您的资金安全密码已经被锁定，请等待24个小时后会自动解锁。"}
 	return
@@ -142,7 +143,7 @@ func (z *ZB) Repay(loanRecordId string, repayAmount float64, repayType int) (res
 	params.Set("repayType", fmt.Sprint(repayType))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "repay?" + params.Encode()
+	url := z.tradeURL + "repay?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	return
 }
@@ -155,7 +156,7 @@ func (z *ZB) DoAllRepay(marketName string) (result GeneralResult, err error) {
 	params.Set("marketName", marketName)
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "doAllRepay?" + params.Encode()
+	url := z.tradeURL + "doAllRepay?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	return
 }
@@ -170,7 +171,7 @@ func (z *ZB) GetRepayments(loanRecordId string, pageIndex int, pageSize int) (re
 	params.Set("pageSize", fmt.Sprint(pageSize))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getRepayments?" + params.Encode()
+	url := z.tradeURL + "getRepayments?" + params.Encode()
 	var ret RepaymentsResponse
 	_, err = z.HttpGet(url, "", nil, &ret)
 	if err != nil {

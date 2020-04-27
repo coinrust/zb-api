@@ -25,7 +25,7 @@ func (z *ZB) PlaceOrder(symbol string, price float64, amount float64, tradeType 
 	}
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "order?" + params.Encode()
+	url := z.tradeURL + "order?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":2009,"message":"账户余额不足"}
 	return
@@ -58,7 +58,7 @@ func (z *ZB) PlaceOrderMore(symbol string, tradeParams [][]float64, tradeType in
 		return
 	}
 
-	url := TRADE_URL + "orderMoreV2?" + payload + "&sign=" + sign + "&reqTime=" + fmt.Sprintf("%d", time.Now().UnixNano()/int64(time.Millisecond))
+	url := z.tradeURL + "orderMoreV2?" + payload + "&sign=" + sign + "&reqTime=" + fmt.Sprintf("%d", time.Now().UnixNano()/int64(time.Millisecond))
 	if z.debugMode {
 		log.Printf("url: %v", url)
 	}
@@ -80,7 +80,7 @@ func (z *ZB) CancelOrder(symbol string, id int64, customOrderID string) (result 
 	}
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "cancelOrder?" + params.Encode()
+	url := z.tradeURL + "cancelOrder?" + params.Encode()
 	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":3001,"message":"挂单没有找到或已完成"}
 	return
@@ -98,7 +98,7 @@ func (z *ZB) GetOrder(symbol string, id int64, customOrderID string) (result Ord
 	}
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getOrder?" + params.Encode()
+	url := z.tradeURL + "getOrder?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
@@ -124,7 +124,7 @@ func (z *ZB) GetOrders(symbol string, tradeType int, pageIndex int) (result []Or
 	params.Set("pageIndex", fmt.Sprint(pageIndex))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getOrders?" + params.Encode()
+	url := z.tradeURL + "getOrders?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
@@ -149,7 +149,7 @@ func (z *ZB) GetOrdersIgnoreTradeType(symbol string, pageIndex int, pageSize int
 	params.Set("pageSize", fmt.Sprint(pageSize))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getOrdersIgnoreTradeType?" + params.Encode()
+	url := z.tradeURL + "getOrdersIgnoreTradeType?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
@@ -174,7 +174,7 @@ func (z *ZB) GetUnfinishedOrdersIgnoreTradeType(symbol string, pageIndex int, pa
 	params.Set("pageSize", fmt.Sprint(pageSize))
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getUnfinishedOrdersIgnoreTradeType?" + params.Encode()
+	url := z.tradeURL + "getUnfinishedOrdersIgnoreTradeType?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
@@ -197,7 +197,7 @@ func (z *ZB) GetAccountInfo() (result AccountInfo, err error) {
 	params.Set("method", "getAccountInfo")
 	z.buildSignParams(&params)
 
-	url := TRADE_URL + "getAccountInfo?" + params.Encode()
+	url := z.tradeURL + "getAccountInfo?" + params.Encode()
 	var resp []byte
 	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
