@@ -56,6 +56,17 @@ func TestZB_GetOrder(t *testing.T) {
 	t.Logf("%#v", order)
 }
 
+func TestZB_GetOrders(t *testing.T) {
+	z := testZB()
+	orders, err := z.GetOrders("usdt_qc",
+		1, 1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%#v", orders)
+}
+
 func TestZB_GetUnfinishedOrdersIgnoreTradeType(t *testing.T) {
 	z := testZB()
 	orders, err := z.GetUnfinishedOrdersIgnoreTradeType("usdt_qc",

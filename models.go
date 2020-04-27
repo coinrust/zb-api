@@ -16,6 +16,8 @@ type TickerData struct {
 	Sell float64 `json:"sell,string"`
 }
 
+type AllTicker map[string]TickerData
+
 type Ticker struct {
 	Date   int64      `json:"date,string"` // 1587952260502
 	Ticker TickerData `json:"ticker"`
@@ -25,6 +27,21 @@ type Depth struct {
 	Asks      [][]float64 `json:"asks"`
 	Bids      [][]float64 `json:"bids"`
 	Timestamp int64       `json:"timestamp"` // 1587953173
+}
+
+type Trade struct {
+	Amount    float64 `json:"amount,string"`
+	Date      int64   `json:"date"`
+	Price     float64 `json:"price,string"`
+	Tid       int64   `json:"tid"`
+	TradeType string  `json:"trade_type"`
+	Type      string  `json:"type"`
+}
+
+type KLine struct {
+	Symbol    string      `json:"symbol"`
+	Data      [][]float64 `json:"data"` // 时间戳(ms),Open,High,Low,Close,Volume
+	MoneyType string      `json:"moneyType"`
 }
 
 type OrderResponse struct {

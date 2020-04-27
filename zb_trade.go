@@ -26,15 +26,8 @@ func (z *ZB) PlaceOrder(symbol string, price float64, amount float64, tradeType 
 	z.buildSignParams(&params)
 
 	url := TRADE_URL + "order?" + params.Encode()
-	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, &result)
-	if err != nil {
-		return
-	}
+	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":2009,"message":"账户余额不足"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
-	}
 	return
 }
 
@@ -69,16 +62,9 @@ func (z *ZB) PlaceOrderMore(symbol string, tradeParams [][]float64, tradeType in
 	if z.debugMode {
 		log.Printf("url: %v", url)
 	}
-	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, &result)
-	if err != nil {
-		return
-	}
+	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":1003,"message":"验证不通过"}
 	// {"code":2009,"message":"账户余额不足"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
-	}
 	return
 }
 
@@ -95,15 +81,8 @@ func (z *ZB) CancelOrder(symbol string, id int64, customOrderID string) (result 
 	z.buildSignParams(&params)
 
 	url := TRADE_URL + "cancelOrder?" + params.Encode()
-	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, &result)
-	if err != nil {
-		return
-	}
+	_, err = z.HttpGet(url, "", nil, &result)
 	// {"code":3001,"message":"挂单没有找到或已完成"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
-	}
 	return
 }
 
@@ -121,13 +100,60 @@ func (z *ZB) GetOrder(symbol string, id int64, customOrderID string) (result Ord
 
 	url := TRADE_URL + "getOrder?" + params.Encode()
 	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, nil)
+	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
 		return
 	}
 	// {"code":3001,"message":"挂单没有找到或已完成"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
+	g := gjson.ParseBytes(resp)
+	if codeValue := g.Get("code"); codeValue.Exists() {
+		err = fmt.Errorf("code=%v message=%v",
+			codeValue.Int(), g.Get("message").String())
+		return
+	}
+	err = json.Unmarshal(resp, &result)
+	return
+}
+
+// GetOrders 获取多个委托单
+func (z *ZB) GetOrders(symbol string, tradeType int, pageIndex int) (result []Order, err error) {
+	params := url.Values{}
+	params.Set("method", "getOrders")
+	params.Set("currency", symbol)
+	params.Set("tradeType", fmt.Sprint(tradeType))
+	params.Set("pageIndex", fmt.Sprint(pageIndex))
+	z.buildSignParams(&params)
+
+	url := TRADE_URL + "getOrders?" + params.Encode()
+	var resp []byte
+	resp, err = z.HttpGet(url, "", nil, nil)
+	if err != nil {
+		return
+	}
+	g := gjson.ParseBytes(resp)
+	if codeValue := g.Get("code"); codeValue.Exists() {
+		err = fmt.Errorf("code=%v message=%v",
+			codeValue.Int(), g.Get("message").String())
+		return
+	}
+	err = json.Unmarshal(resp, &result)
+	return
+}
+
+// GetOrdersIgnoreTradeType 获取委托单忽略类型
+func (z *ZB) GetOrdersIgnoreTradeType(symbol string, pageIndex int, pageSize int) (result []Order, err error) {
+	params := url.Values{}
+	params.Set("method", "getOrdersIgnoreTradeType")
+	params.Set("currency", symbol)
+	params.Set("pageIndex", fmt.Sprint(pageIndex))
+	params.Set("pageSize", fmt.Sprint(pageSize))
+	z.buildSignParams(&params)
+
+	url := TRADE_URL + "getOrdersIgnoreTradeType?" + params.Encode()
+	var resp []byte
+	resp, err = z.HttpGet(url, "", nil, nil)
+	if err != nil {
+		return
 	}
 	g := gjson.ParseBytes(resp)
 	if codeValue := g.Get("code"); codeValue.Exists() {
@@ -150,14 +176,11 @@ func (z *ZB) GetUnfinishedOrdersIgnoreTradeType(symbol string, pageIndex int, pa
 
 	url := TRADE_URL + "getUnfinishedOrdersIgnoreTradeType?" + params.Encode()
 	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, nil)
+	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
 		return
 	}
 	// {"code":3001,"message":"挂单没有找到或已完成"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
-	}
 	g := gjson.ParseBytes(resp)
 	if codeValue := g.Get("code"); codeValue.Exists() {
 		err = fmt.Errorf("code=%v message=%v",
@@ -176,14 +199,11 @@ func (z *ZB) GetAccountInfo() (result AccountInfo, err error) {
 
 	url := TRADE_URL + "getAccountInfo?" + params.Encode()
 	var resp []byte
-	resp, err = HttpGet(z.httpClient, url, "", nil, nil)
+	resp, err = z.HttpGet(url, "", nil, nil)
 	if err != nil {
 		return
 	}
 	// {"code":3001,"message":"挂单没有找到或已完成"}
-	if z.debugMode {
-		log.Printf("%v", string(resp))
-	}
 	g := gjson.ParseBytes(resp)
 	if codeValue := g.Get("code"); codeValue.Exists() {
 		err = fmt.Errorf("code=%v message=%v",

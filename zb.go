@@ -7,10 +7,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -32,6 +36,54 @@ type ZB struct {
 	accessKey  string
 	secretKey  string
 	debugMode  bool
+}
+
+func (z *ZB) HttpGet(reqUrl string, postData string, headers map[string]string, result interface{}) ([]byte, error) {
+	return z.NewHttpRequest("GET", reqUrl, postData, headers, result)
+}
+
+func (z *ZB) HttpPost(reqUrl string, postData string, headers map[string]string, result interface{}) ([]byte, error) {
+	return z.NewHttpRequest("POST", reqUrl, postData, headers, result)
+}
+
+func (z *ZB) NewHttpRequest(method string, reqUrl string, postData string, requestHeaders map[string]string, result interface{}) ([]byte, error) {
+	if z.debugMode {
+		log.Printf("reqUrl: %v", reqUrl)
+	}
+	req, _ := http.NewRequest(method, reqUrl, strings.NewReader(postData))
+	//req.Header.Set("User-Agent", defaultUserAgent)
+
+	if requestHeaders != nil {
+		for k, v := range requestHeaders {
+			req.Header.Add(k, v)
+		}
+	}
+
+	resp, err := z.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	bodyData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if z.debugMode {
+		log.Printf("%v", string(bodyData))
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, errors.New(fmt.Sprintf("HttpStatusCode: %d, Desc: %s", resp.StatusCode, string(bodyData)))
+	}
+
+	if result != nil {
+		err = json.Unmarshal(bodyData, result)
+	}
+
+	return bodyData, err
 }
 
 func (z *ZB) buildSignParams(params *url.Values) error {
