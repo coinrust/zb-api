@@ -240,3 +240,42 @@ type RepaymentsResponse struct {
 	Message string      `json:"message"`
 	Result  []Repayment `json:"result"`
 }
+
+type WSTickerData struct {
+	High float64 `json:"high,string"`
+	Vol  float64 `json:"vol,string"`
+	Last float64 `json:"last,string"`
+	Low  float64 `json:"low,string"`
+	Buy  float64 `json:"buy,string"`
+	Sell float64 `json:"sell,string"`
+}
+
+type WSTicker struct {
+	Date     int64        `json:"date,string"` // (ms)
+	Ticker   WSTickerData `json:"ticker"`
+	DataType string       `json:"dataType"`
+	Channel  string       `json:"channel"`
+}
+
+type WSDepth struct {
+	Asks      [][]float64 `json:"asks"`
+	DataType  string      `json:"dataType"`
+	Bids      [][]float64 `json:"bids"`
+	Channel   string      `json:"channel"`
+	Timestamp int64       `json:"timestamp"`
+}
+
+type WSTrade struct {
+	Date      int64   `json:"date"`
+	Amount    float64 `json:"amount,string"`
+	Price     float64 `json:"price,string"`
+	TradeType string  `json:"trade_type"`
+	Type      string  `json:"type"`
+	Tid       int64   `json:"tid"`
+}
+
+type WSTrades struct {
+	Data     []WSTrade `json:"data"`
+	DataType string    `json:"dataType"`
+	Channel  string    `json:"channel"`
+}
