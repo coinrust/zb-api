@@ -85,7 +85,7 @@ func (ws *ZBWebsocket) run() {
 			log.Printf("Websocket closed %s", ws.conn.GetURL())
 			return
 		default:
-			messageType, msg, err := ws.conn.ReadMessage()
+			messageType, msg, err := ws.readMessage()
 			if err != nil {
 				log.Printf("Read error: %v", err)
 				time.Sleep(100 * time.Millisecond)
@@ -95,6 +95,17 @@ func (ws *ZBWebsocket) run() {
 			ws.handleMsg(messageType, msg)
 		}
 	}
+}
+
+func (ws *ZBWebsocket) readMessage() (messageType int, message []byte, err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("error: %v", err)
+			err = fmt.Errorf("read message error")
+		}
+	}()
+	messageType, msg, err := ws.conn.ReadMessage()
+	return messageType, msg, err
 }
 
 func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
@@ -115,6 +126,7 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 			var data WSTicker
 			err = json.Unmarshal(msg, &data)
 			if err != nil {
+				log.Printf("%v", err)
 				return
 			}
 			if ws.tickerCallback != nil {
@@ -124,6 +136,7 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 			var data WSDepth
 			err = json.Unmarshal(msg, &data)
 			if err != nil {
+				log.Printf("%v", err)
 				return
 			}
 			if ws.depthCallback != nil {
@@ -133,6 +146,7 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 			var data WSTrades
 			err = json.Unmarshal(msg, &data)
 			if err != nil {
+				log.Printf("%v", err)
 				return
 			}
 			if ws.tradesCallback != nil {
@@ -144,9 +158,13 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 }
 
 func (ws *ZBWebsocket) subscribeHandler() error {
-	log.Printf("subscribeHandler")
+	if ws.debugMode {
+		log.Printf("subscribeHandler")
+	}
 	for _, v := range ws.subscriptions {
-		//log.Printf("sub: %#v", v)
+		if ws.debugMode {
+			log.Printf("sub: %#v", v)
+		}
 		err := ws.sendWSMessage(v)
 		if err != nil {
 			log.Printf("%v", err)
