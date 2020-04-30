@@ -16,7 +16,7 @@ func testWS() *ZBWebsocket {
 
 	accessKey := viper.GetString("access_key")
 	secretKey := viper.GetString("secret_key")
-	ws := NewZBWebsocket(accessKey, secretKey, true)
+	ws := NewZBWebsocket("zb.live", accessKey, secretKey, true)
 	return ws
 }
 

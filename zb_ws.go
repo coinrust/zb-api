@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-const (
-	wsURL = "wss://api.zb.live/websocket"
-)
-
 type ZBWebsocket struct {
 	wsURL     string
 	accessKey string
@@ -159,7 +155,8 @@ func (ws *ZBWebsocket) subscribeHandler() error {
 	return nil
 }
 
-func NewZBWebsocket(accessKey string, secretKey string, debugMode bool) *ZBWebsocket {
+func NewZBWebsocket(host string, accessKey string, secretKey string, debugMode bool) *ZBWebsocket {
+	wsURL := fmt.Sprintf("wss://api.%v/websocket", host) // zb.live
 	ws := &ZBWebsocket{
 		wsURL:         wsURL,
 		subscriptions: make(map[string]interface{}),
