@@ -43,8 +43,14 @@ func (z *ZB) GetKLine(symbol string, _type string, since int64, size int) (kLine
 	if size == 0 {
 		size = 1000
 	}
-	url := z.marketURL + fmt.Sprintf("kline?market=%v&type=%v&since=%v&size=%v",
-		symbol, _type, since, size)
+	var url string
+	if since > 0 {
+		url = z.marketURL + fmt.Sprintf("kline?market=%v&type=%v&since=%v&size=%v",
+			symbol, _type, since, size)
+	} else {
+		url = z.marketURL + fmt.Sprintf("kline?market=%v&type=%v&size=%v",
+			symbol, _type, size)
+	}
 	_, err = z.HttpGet(url, "", nil, &kLine)
 	return
 }
