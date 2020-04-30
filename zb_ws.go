@@ -155,10 +155,15 @@ func (ws *ZBWebsocket) subscribeHandler() error {
 	return nil
 }
 
+// NewZBWebsocket
+// host: zb.live/zb.com
 func NewZBWebsocket(host string, accessKey string, secretKey string, debugMode bool) *ZBWebsocket {
 	wsURL := fmt.Sprintf("wss://api.%v/websocket", host) // zb.live
 	ws := &ZBWebsocket{
 		wsURL:         wsURL,
+		accessKey:     accessKey,
+		secretKey:     secretKey,
+		debugMode:     debugMode,
 		subscriptions: make(map[string]interface{}),
 	}
 	ws.ctx, ws.cancel = context.WithCancel(context.Background())
