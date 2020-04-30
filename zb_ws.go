@@ -46,7 +46,14 @@ func (ws *ZBWebsocket) SetTradesCallback(callback func(trades *WSTrades)) {
 	ws.tradesCallback = callback
 }
 
-func (ws *ZBWebsocket) sendWSMessage(msg interface{}) error {
+func (ws *ZBWebsocket) sendWSMessage(msg interface{}) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Printf("error: %v", e)
+			err = fmt.Errorf("sendWSMessage error")
+		}
+	}()
+	log.Printf("send message: %v", msg)
 	return ws.conn.WriteJSON(msg)
 }
 
@@ -99,8 +106,8 @@ func (ws *ZBWebsocket) run() {
 
 func (ws *ZBWebsocket) readMessage() (messageType int, message []byte, err error) {
 	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("error: %v", err)
+		if e := recover(); e != nil {
+			log.Printf("error: %v", e)
 			err = fmt.Errorf("read message error")
 		}
 	}()
@@ -152,7 +159,11 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 			if ws.tradesCallback != nil {
 				ws.tradesCallback(&data)
 			}
+		} else {
+			log.Printf("%v", string(msg))
 		}
+	} else {
+		log.Printf("%v", string(msg))
 	}
 	return nil
 }
