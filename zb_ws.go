@@ -1,15 +1,12 @@
 package zb
 
 import (
-	"context"
 	"fmt"
-	"github.com/recws-org/recws"
+	"github.com/coinrust/wsconn"
 	"github.com/tidwall/gjson"
 	"strings"
 
-	//"github.com/tidwall/gjson"
 	"log"
-	"time"
 )
 
 type ZBWebsocket struct {
@@ -18,20 +15,12 @@ type ZBWebsocket struct {
 	secretKey string
 	debugMode bool
 
-	ctx    context.Context
-	cancel context.CancelFunc
-	conn   recws.RecConn
+	conn *wsconn.WsConn
 
 	subscriptions  map[string]interface{}
 	tickerCallback func(ticker *WSTicker)
 	depthCallback  func(depth *WSDepth)
 	tradesCallback func(trades *WSTrades)
-}
-
-func (ws *ZBWebsocket) Start() {
-	log.Printf("wsURL: %v", ws.wsURL)
-	ws.conn.Dial(ws.wsURL, nil)
-	go ws.run()
 }
 
 func (ws *ZBWebsocket) SetTickerCallback(callback func(ticker *WSTicker)) {
@@ -54,7 +43,7 @@ func (ws *ZBWebsocket) sendWSMessage(msg interface{}) (err error) {
 		}
 	}()
 	log.Printf("send message: %v", msg)
-	return ws.conn.WriteJSON(msg)
+	return ws.conn.SendJsonMessage(msg)
 }
 
 func (ws *ZBWebsocket) SubscribeTicker(symbol string) (err error) {
@@ -73,49 +62,14 @@ func (ws *ZBWebsocket) SubscribeTrades(symbol string) (err error) {
 }
 
 func (ws *ZBWebsocket) Subscribe(event string, channel string) (err error) {
-	params := map[string]string{
+	sub := map[string]string{
 		"event":   event,
 		"channel": channel,
 	}
-	id := event + ":" + channel
-	ws.subscriptions[id] = params
-	err = ws.sendWSMessage(params)
-	return
+	return ws.conn.Subscribe(sub)
 }
 
-func (ws *ZBWebsocket) run() {
-	ctx := context.Background()
-	for {
-		select {
-		case <-ctx.Done():
-			go ws.conn.Close()
-			log.Printf("Websocket closed %s", ws.conn.GetURL())
-			return
-		default:
-			messageType, msg, err := ws.readMessage()
-			if err != nil {
-				log.Printf("Read error: %v", err)
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
-
-			ws.handleMsg(messageType, msg)
-		}
-	}
-}
-
-func (ws *ZBWebsocket) readMessage() (messageType int, message []byte, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			log.Printf("error: %v", e)
-			err = fmt.Errorf("read message error")
-		}
-	}()
-	messageType, msg, err := ws.conn.ReadMessage()
-	return messageType, msg, err
-}
-
-func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
+func (ws *ZBWebsocket) messageHandle(msg []byte) (err error) {
 	ret := gjson.ParseBytes(msg)
 
 	if ws.debugMode {
@@ -168,20 +122,8 @@ func (ws *ZBWebsocket) handleMsg(messageType int, msg []byte) (err error) {
 	return nil
 }
 
-func (ws *ZBWebsocket) subscribeHandler() error {
-	if ws.debugMode {
-		log.Printf("subscribeHandler")
-	}
-	for _, v := range ws.subscriptions {
-		if ws.debugMode {
-			log.Printf("sub: %#v", v)
-		}
-		err := ws.sendWSMessage(v)
-		if err != nil {
-			log.Printf("%v", err)
-		}
-	}
-	return nil
+func (ws *ZBWebsocket) errorHandle(err error) {
+
 }
 
 // NewZBWebsocket
@@ -195,10 +137,14 @@ func NewZBWebsocket(host string, accessKey string, secretKey string, debugMode b
 		debugMode:     debugMode,
 		subscriptions: make(map[string]interface{}),
 	}
-	ws.ctx, ws.cancel = context.WithCancel(context.Background())
-	ws.conn = recws.RecConn{
-		KeepAliveTimeout: 10 * time.Second,
-	}
-	ws.conn.SubscribeHandler = ws.subscribeHandler
+	//ws.ctx, ws.cancel = context.WithCancel(context.Background())
+	conn := wsconn.NewWs(
+		wsconn.WsUrlOption(wsURL),
+		wsconn.WsDumpOption(true),
+		wsconn.WsAutoReconnectOption(true),
+		wsconn.WsMessageHandleFuncOption(ws.messageHandle),
+		wsconn.WsErrorHandleFuncOption(ws.errorHandle),
+	)
+	ws.conn = conn
 	return ws
 }

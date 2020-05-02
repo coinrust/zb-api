@@ -1,36 +1,33 @@
 package zb
 
 import (
-	"github.com/spf13/viper"
-	"log"
+	"go.uber.org/config"
 	"testing"
 )
 
-func testZB() *ZB {
-	viper.SetConfigName("test_config")
-	viper.AddConfigPath("./testdata")
-	err := viper.ReadInConfig()
+func loadConfig() config.Provider {
+	provider, err := config.NewYAML(config.File("./testdata/test_config.yaml"))
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
+	return provider
+}
 
-	accessKey := viper.GetString("access_key")
-	secretKey := viper.GetString("secret_key")
+func testZB() *ZB {
+	cfg := loadConfig()
+
+	accessKey := cfg.Get("access_key").String()
+	secretKey := cfg.Get("secret_key").String()
 	host := "zb.live"
 	z := NewZB(nil, host, accessKey, secretKey, true)
 	return z
 }
 
 func testZB2() *ZB {
-	viper.SetConfigName("test_config")
-	viper.AddConfigPath("./testdata")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Panic(err)
-	}
+	cfg := loadConfig()
 
-	accessKey := viper.GetString("access_key")
-	secretKey := viper.GetString("secret_key")
+	accessKey := cfg.Get("access_key").String()
+	secretKey := cfg.Get("secret_key").String()
 	host := "zb.com"
 	z := NewZB(nil, host, accessKey, secretKey, true)
 	return z
