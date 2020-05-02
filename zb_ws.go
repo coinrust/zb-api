@@ -123,7 +123,7 @@ func (ws *ZBWebsocket) messageHandle(msg []byte) (err error) {
 }
 
 func (ws *ZBWebsocket) errorHandle(err error) {
-
+	log.Printf("[ws] error: %v", err)
 }
 
 // NewZBWebsocket
@@ -137,7 +137,6 @@ func NewZBWebsocket(host string, accessKey string, secretKey string, debugMode b
 		debugMode:     debugMode,
 		subscriptions: make(map[string]interface{}),
 	}
-	//ws.ctx, ws.cancel = context.WithCancel(context.Background())
 	conn := wsconn.NewWs(
 		wsconn.WsUrlOption(wsURL),
 		wsconn.WsDumpOption(true),
